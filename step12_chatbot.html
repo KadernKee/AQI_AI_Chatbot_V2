@@ -1,0 +1,1097 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AQI Prediction Chatbot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+        
+        .chat-header {
+            padding: 20px 25px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .bot-avatar {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .header-info {
+            flex: 1;
+        }
+        
+        .header-title {
+            color: white;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+        
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85em;
+            margin-top: 3px;
+        }
+        
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 0.85em;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #2ecc71;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            max-width: 85%;
+            padding: 15px 18px;
+            border-radius: 18px;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .bot-message {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message-time {
+            font-size: 0.7em;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+        
+        .quick-actions {
+            padding: 15px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .quick-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            color: white;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .quick-btn:hover {
+            background: rgba(52, 152, 219, 0.5);
+            border-color: #3498db;
+            transform: translateY(-2px);
+        }
+        
+        .chat-input-container {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            gap: 12px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            color: white;
+            font-size: 1em;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .chat-input:focus {
+            border-color: #3498db;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .send-btn {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        /* Response styling */
+        .aqi-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .aqi-value {
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+        
+        .aqi-good { color: #27ae60; }
+        .aqi-moderate { color: #f1c40f; }
+        .aqi-unhealthy-sg { color: #e67e22; }
+        .aqi-unhealthy { color: #e74c3c; }
+        .aqi-very-unhealthy { color: #8e44ad; }
+        .aqi-hazardous { color: #7f0000; }
+        
+        .category-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        
+        .badge-good { background: #27ae60; color: white; }
+        .badge-moderate { background: #f1c40f; color: #333; }
+        .badge-unhealthy-sg { background: #e67e22; color: white; }
+        .badge-unhealthy { background: #e74c3c; color: white; }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 0.9em;
+        }
+        
+        .data-table th, .data-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .data-table th {
+            background: rgba(52, 152, 219, 0.3);
+            font-weight: 600;
+        }
+        
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .highlight { color: #3498db; font-weight: 600; }
+        .success { color: #27ae60; }
+        .warning { color: #f1c40f; }
+        .danger { color: #e74c3c; }
+        
+        .info-box {
+            background: rgba(52, 152, 219, 0.2);
+            border-left: 4px solid #3498db;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .tip-box {
+            background: rgba(39, 174, 96, 0.2);
+            border-left: 4px solid #27ae60;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .warning-box {
+            background: rgba(241, 196, 15, 0.2);
+            border-left: 4px solid #f1c40f;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            padding: 15px;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 100% { opacity: 0.3; transform: translateY(0); }
+            50% { opacity: 1; transform: translateY(-5px); }
+        }
+        
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .rec-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .rec-icon { font-size: 1.5em; }
+        .rec-text { font-size: 0.85em; }
+        
+        /* Scrollbar */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="bot-avatar">🤖</div>
+            <div class="header-info">
+                <div class="header-title">AQI Prediction Assistant</div>
+                <div class="header-subtitle">Powered by GRU Deep Learning Model</div>
+            </div>
+            <div class="header-status">
+                <div class="status-dot"></div>
+                <span>Online</span>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will be added here -->
+        </div>
+        
+        <div class="quick-actions">
+            <button class="quick-btn" onclick="sendMessage('Hello')">👋 Say Hello</button>
+            <button class="quick-btn" onclick="sendMessage('What is today\'s AQI?')">📊 Today's AQI</button>
+            <button class="quick-btn" onclick="sendMessage('Show last 7 days')">📅 Last 7 Days</button>
+            <button class="quick-btn" onclick="sendMessage('Show next 7 days forecast')">🔮 Next 7 Days</button>
+            <button class="quick-btn" onclick="sendMessage('Health advice')">🏃 Health Advice</button>
+            <button class="quick-btn" onclick="sendMessage('Tell me about the model')">🔬 About Model</button>
+            <button class="quick-btn" onclick="sendMessage('What is AQI?')">❓ What is AQI</button>
+            <button class="quick-btn" onclick="sendMessage('Help')">📋 Help</button>
+        </div>
+        
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="userInput" 
+                   placeholder="Ask me about air quality..." 
+                   onkeypress="handleKeyPress(event)">
+            <button class="send-btn" onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+
+    <script>
+        // Data from Python (UPDATED)
+        const pastData = [{"date": "Dec 10", "day_name": "Wednesday", "day_short": "Wed", "predicted": 27.8, "actual": 26.0, "error": 1.8, "is_today": false}, {"date": "Dec 11", "day_name": "Thursday", "day_short": "Thu", "predicted": 28.6, "actual": 28.0, "error": 0.6, "is_today": false}, {"date": "Dec 12", "day_name": "Friday", "day_short": "Fri", "predicted": 29.4, "actual": 21.0, "error": 8.4, "is_today": false}, {"date": "Dec 13", "day_name": "Saturday", "day_short": "Sat", "predicted": 29.1, "actual": 22.0, "error": 7.1, "is_today": false}, {"date": "Dec 14", "day_name": "Sunday", "day_short": "Sun", "predicted": 29.2, "actual": 14.0, "error": 15.2, "is_today": false}, {"date": "Dec 15", "day_name": "Monday", "day_short": "Mon", "predicted": 29.4, "actual": 25.0, "error": 4.4, "is_today": false}, {"date": "Dec 16", "day_name": "Tuesday", "day_short": "Tue", "predicted": 29.6, "actual": 23.0, "error": 6.6, "is_today": true}];
+        const futureData = [{"date": "Dec 17", "day_name": "Wednesday", "day_short": "Wed", "predicted": 27.3}, {"date": "Dec 18", "day_name": "Thursday", "day_short": "Thu", "predicted": 30.4}, {"date": "Dec 19", "day_name": "Friday", "day_short": "Fri", "predicted": 30.3}, {"date": "Dec 20", "day_name": "Saturday", "day_short": "Sat", "predicted": 29.5}, {"date": "Dec 21", "day_name": "Sunday", "day_short": "Sun", "predicted": 27.8}, {"date": "Dec 22", "day_name": "Monday", "day_short": "Mon", "predicted": 28.0}, {"date": "Dec 23", "day_name": "Tuesday", "day_short": "Tue", "predicted": 27.9}];
+        
+        const todayDate = "Dec 16";
+        const todayDayName = "Tuesday";
+        const todayPredicted = 29.6;
+        const todayActual = 23.0;
+        
+        // Model info (UPDATED FOR GRU)
+        const modelInfo = {
+            name: "GRU (Gated Recurrent Unit)",
+            mae: 8.82,
+            accuracy: 87.91,
+            rmse: 13.91,
+            r2: 0.3482,
+            parameters: 12391,
+            baselineImprovement: 5.80,
+            topFeature: "O3_Mean_roll_std_7",
+            topPollutant: "O3 (Ozone)",
+            topLag: "Lag 2 (2 days)"
+        };
+        
+        // User name memory
+        let userName = "";
+        let waitingForName = false;
+        
+        // Helper functions
+        function getAQICategory(aqi) {
+            if (aqi <= 50) return { name: "Good", class: "good", emoji: "😊", color: "#27ae60" };
+            if (aqi <= 100) return { name: "Moderate", class: "moderate", emoji: "😐", color: "#f1c40f" };
+            if (aqi <= 150) return { name: "Unhealthy for Sensitive Groups", class: "unhealthy-sg", emoji: "😷", color: "#e67e22" };
+            if (aqi <= 200) return { name: "Unhealthy", class: "unhealthy", emoji: "🤢", color: "#e74c3c" };
+            if (aqi <= 300) return { name: "Very Unhealthy", class: "very-unhealthy", emoji: "😨", color: "#8e44ad" };
+            return { name: "Hazardous", class: "hazardous", emoji: "☠️", color: "#7f0000" };
+        }
+        
+        function getTimeString() {
+            return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        function addMessage(content, isUser = false) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            messageDiv.innerHTML = content + `<div class="message-time">${getTimeString()}</div>`;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function showTyping() {
+            const messagesContainer = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot-message';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function hideTyping() {
+            const typing = document.getElementById('typing-indicator');
+            if (typing) typing.remove();
+        }
+        
+        function getGreeting() {
+            const hour = new Date().getHours();
+            if (hour < 12) return "Good morning";
+            if (hour < 17) return "Good afternoon";
+            return "Good evening";
+        }
+        
+        function getUserGreeting() {
+            return userName ? `, ${userName}` : "";
+        }
+        
+        // Find specific date in past/future data
+        function findDateInPast(query) {
+            const q = query.toLowerCase();
+            for (let i = 0; i < pastData.length; i++) {
+                const d = pastData[i];
+                if (q.includes(d.day_name.toLowerCase()) || 
+                    q.includes(d.day_short.toLowerCase()) ||
+                    q.includes(d.date.toLowerCase())) {
+                    return { data: d, index: i, type: "past" };
+                }
+            }
+            return null;
+        }
+        
+        function findDateInFuture(query) {
+            const q = query.toLowerCase();
+            for (let i = 0; i < futureData.length; i++) {
+                const d = futureData[i];
+                if (q.includes(d.day_name.toLowerCase()) || 
+                    q.includes(d.day_short.toLowerCase()) ||
+                    q.includes(d.date.toLowerCase())) {
+                    return { data: d, index: i, type: "future" };
+                }
+            }
+            return null;
+        }
+        
+        // Get health recommendations based on AQI
+        function getHealthAdvice(aqi) {
+            if (aqi <= 50) {
+                return {
+                    exercise: "✅ Perfect for all outdoor activities! Go enjoy!",
+                    mask: "✅ No mask needed - breathe freely!",
+                    windows: "✅ Open windows for fresh air circulation",
+                    children: "✅ Safe for children and elderly to play outside",
+                    overall: "Air quality is excellent. No precautions needed."
+                };
+            } else if (aqi <= 100) {
+                return {
+                    exercise: "⚠️ Generally safe, but sensitive individuals should take breaks",
+                    mask: "⚠️ Optional - consider if you have respiratory issues",
+                    windows: "⚠️ Okay to open, but monitor air quality",
+                    children: "⚠️ Limit prolonged outdoor activities for sensitive children",
+                    overall: "Air quality is acceptable. Some sensitive individuals may experience minor symptoms."
+                };
+            } else if (aqi <= 150) {
+                return {
+                    exercise: "⚠️ Reduce intensity and duration of outdoor activities",
+                    mask: "😷 Recommended for outdoor activities",
+                    windows: "🪟 Limit ventilation, consider air purifier",
+                    children: "👶 Children and elderly should limit outdoor time",
+                    overall: "Members of sensitive groups may experience health effects."
+                };
+            } else {
+                return {
+                    exercise: "❌ Avoid outdoor exercise - stay indoors",
+                    mask: "😷 N95 mask required if going outside",
+                    windows: "🪟 Keep windows closed, use air purifier",
+                    children: "👶 Keep children and elderly indoors",
+                    overall: "Everyone may experience health effects. Limit outdoor exposure."
+                };
+            }
+        }
+        
+        // Process user message
+        function processMessage(input) {
+            const query = input.toLowerCase().trim();
+            
+            // Check if waiting for name
+            if (waitingForName) {
+                // Extract name from response
+                const namePatterns = [
+                    /my name is ([a-zA-Z]+)/i,
+                    /i am ([a-zA-Z]+)/i,
+                    /call me ([a-zA-Z]+)/i,
+                    /i'm ([a-zA-Z]+)/i,
+                    /^([a-zA-Z]+)$/i
+                ];
+                
+                let extractedName = null;
+                for (const pattern of namePatterns) {
+                    const match = input.match(pattern);
+                    if (match) {
+                        extractedName = match[1];
+                        break;
+                    }
+                }
+                
+                if (extractedName) {
+                    userName = extractedName.charAt(0).toUpperCase() + extractedName.slice(1).toLowerCase();
+                    waitingForName = false;
+                    return `
+                        <div style="font-size: 1.1em;">Nice to meet you, <span class="highlight">${userName}</span>! 🎉</div>
+                        <div style="margin-top: 10px;">I'll remember your name throughout our conversation.</div>
+                        <div class="info-box" style="margin-top: 15px;">
+                            <strong>How can I help you today?</strong><br>
+                            You can ask me about:
+                            <ul style="margin: 8px 0 0 20px;">
+                                <li>Today's AQI prediction</li>
+                                <li>Past 7 days air quality</li>
+                                <li>Next 7 days forecast</li>
+                                <li>Health recommendations</li>
+                                <li>Model accuracy and features</li>
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    return "I didn't catch that. Could you please tell me your name?";
+                }
+            }
+            
+            // GREETINGS
+            if (query.match(/^(hi|hello|hey|greetings|good morning|good afternoon|good evening)/)) {
+                waitingForName = !userName;
+                if (userName) {
+                    return `
+                        <div style="font-size: 1.1em;">${getGreeting()}, ${userName}! 👋</div>
+                        <div style="margin-top: 10px;">Welcome back! How can I help you with air quality information today?</div>
+                        <div class="tip-box" style="margin-top: 10px;">
+                            <strong>Quick tip:</strong> You can ask about today's AQI, forecasts, or health advice!
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div style="font-size: 1.1em;">👋 Welcome to the AQI Prediction Assistant!</div>
+                        <div style="margin-top: 10px;">I'm here to help you with air quality information and forecasts.</div>
+                        <div class="info-box" style="margin-top: 15px;">
+                            <strong>May I know your name?</strong><br>
+                            This helps me personalize our conversation!
+                        </div>
+                    `;
+                }
+            }
+            
+            // TODAY'S AQI
+            if (query.match(/today|current|now|right now/) && query.match(/aqi|air|quality|prediction|forecast/)) {
+                const cat = getAQICategory(todayPredicted);
+                const actualCat = getAQICategory(todayActual);
+                const error = Math.abs(todayPredicted - todayActual).toFixed(1);
+                const advice = getHealthAdvice(todayPredicted);
+                
+                return `
+                    <div style="font-size: 1.1em;">${userName ? `Dear ${userName}, ` : ''}📊 Today's Air Quality Report</div>
+                    <div class="aqi-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="opacity: 0.7; margin-bottom: 5px;">Predicted AQI</div>
+                                <div class="aqi-value aqi-${cat.class}">${todayPredicted}</div>
+                                <div class="category-badge badge-${cat.class}">${cat.emoji} ${cat.name}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="opacity: 0.7; margin-bottom: 5px;">Actual AQI</div>
+                                <div style="font-size: 1.8em; font-weight: 600; color: ${actualCat.color}">${todayActual}</div>
+                                <div style="margin-top: 8px; font-size: 0.9em;">Error: <span class="highlight">${error}</span> points</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tip-box">
+                        <strong>Current Status:</strong> ${advice.overall}
+                    </div>
+                    <div style="margin-top: 15px;"><strong>Today's Recommendations:</strong></div>
+                    <div class="recommendations-grid">
+                        <div class="rec-card"><span class="rec-icon">🏃</span><span class="rec-text">${advice.exercise}</span></div>
+                        <div class="rec-card"><span class="rec-icon">😷</span><span class="rec-text">${advice.mask}</span></div>
+                        <div class="rec-card"><span class="rec-icon">🪟</span><span class="rec-text">${advice.windows}</span></div>
+                        <div class="rec-card"><span class="rec-icon">👶</span><span class="rec-text">${advice.children}</span></div>
+                    </div>
+                    <div class="info-box" style="margin-top: 10px;">
+                        📈 Model Accuracy: <strong>${modelInfo.accuracy}%</strong> | MAE: <strong>${modelInfo.mae}</strong> AQI
+                    </div>
+                `;
+            }
+            
+            // YESTERDAY
+            if (query.match(/yesterday/)) {
+                const yesterdayData = pastData[5]; // Second to last
+                const cat = getAQICategory(yesterdayData.predicted);
+                const actualCat = getAQICategory(yesterdayData.actual);
+                
+                return `
+                    <div style="font-size: 1.1em;">${userName ? `Dear ${userName}, ` : ''}📅 Yesterday's AQI (${yesterdayData.day_name}, ${yesterdayData.date})</div>
+                    <div class="aqi-card">
+                        <table class="data-table">
+                            <tr>
+                                <td><strong>Predicted AQI</strong></td>
+                                <td><span class="aqi-${cat.class}" style="font-weight: 700; font-size: 1.2em;">${yesterdayData.predicted}</span> (${cat.name})</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Actual AQI</strong></td>
+                                <td><span style="font-weight: 700; font-size: 1.2em; color: ${actualCat.color}">${yesterdayData.actual}</span> (${actualCat.name})</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Prediction Error</strong></td>
+                                <td><span class="highlight">${yesterdayData.error}</span> points</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="tip-box">
+                        The model's prediction was ${yesterdayData.error < 5 ? 'very accurate! ✅' : yesterdayData.error < 10 ? 'reasonably accurate.' : 'slightly off, but within expected range.'}
+                    </div>
+                `;
+            }
+            
+            // TOMORROW
+            if (query.match(/tomorrow/)) {
+                const tomorrowData = futureData[0];
+                const cat = getAQICategory(tomorrowData.predicted);
+                const advice = getHealthAdvice(tomorrowData.predicted);
+                
+                return `
+                    <div style="font-size: 1.1em;">${userName ? `Dear ${userName}, ` : ''}🔮 Tomorrow's Forecast (${tomorrowData.day_name}, ${tomorrowData.date})</div>
+                    <div class="aqi-card">
+                        <div style="text-align: center;">
+                            <div style="opacity: 0.7; margin-bottom: 5px;">Predicted AQI</div>
+                            <div class="aqi-value aqi-${cat.class}">${tomorrowData.predicted}</div>
+                            <div class="category-badge badge-${cat.class}">${cat.emoji} ${cat.name}</div>
+                        </div>
+                    </div>
+                    <div class="tip-box">
+                        <strong>Recommendation:</strong> ${advice.overall}
+                    </div>
+                    <div class="warning-box">
+                        ⚠️ <strong>Note:</strong> This is a forecast. Actual AQI may vary.
+                    </div>
+                `;
+            }
+            
+            // LAST 7 DAYS / PAST WEEK
+            if (query.match(/last|past|previous|history/) && query.match(/7|seven|week|days/)) {
+                let tableRows = pastData.map((d, i) => `
+                    <tr${d.is_today ? ' style="background: rgba(52, 152, 219, 0.2);"' : ''}>
+                        <td>${d.day_name}${d.is_today ? ' <span class="highlight">(Today)</span>' : ''}</td>
+                        <td>${d.date}</td>
+                        <td style="color: ${getAQICategory(d.predicted).color}; font-weight: 600;">${d.predicted}</td>
+                        <td style="color: ${getAQICategory(d.actual).color}; font-weight: 600;">${d.actual}</td>
+                        <td class="${d.error < 5 ? 'success' : d.error < 10 ? 'warning' : 'danger'}">${d.error}</td>
+                    </tr>
+                `).join('');
+                
+                const avgError = (pastData.reduce((sum, d) => sum + d.error, 0) / 7).toFixed(1);
+                const bestDay = pastData.reduce((min, d) => d.predicted < min.predicted ? d : min);
+                const worstDay = pastData.reduce((max, d) => d.predicted > max.predicted ? d : max);
+                
+                return `
+                    <div style="font-size: 1.1em;">${userName ? `Dear ${userName}, ` : ''}📅 Past 7 Days: Predicted vs Actual AQI</div>
+                    <div class="aqi-card" style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Date</th>
+                                    <th>Predicted</th>
+                                    <th>Actual</th>
+                                    <th>Error</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="info-box">
+                        <strong>Summary:</strong><br>
+                        • Average Error: <span class="highlight">${avgError}</span> AQI points<br>
+                        • Best Day: <span class="success">${bestDay.day_name}</span> (${bestDay.predicted} AQI)<br>
+                        • Worst Day: <span class="danger">${worstDay.day_name}</span> (${worstDay.predicted} AQI)
+                    </div>
+                `;
+            }
+            
+            // NEXT 7 DAYS / FORECAST
+            if (query.match(/next|future|forecast|coming|upcoming/) && query.match(/7|seven|week|days/)) {
+                let tableRows = futureData.map((d, i) => {
+                    const cat = getAQICategory(d.predicted);
+                    return `
+                        <tr>
+                            <td>${d.day_name}</td>
+                            <td>${d.date}</td>
+                            <td style="color: ${cat.color}; font-weight: 600;">${d.predicted}</td>
+                            <td><span class="category-badge badge-${cat.class}" style="font-size: 0.8em;">${cat.name}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                const avgForecast = (futureData.reduce((sum, d) => sum + d.predicted, 0) / 7).toFixed(1);
+                const bestDay = futureData.reduce((min, d) => d.predicted < min.predicted ? d : min);
+                const worstDay = futureData.reduce((max, d) => d.predicted > max.predicted ? d : max);
+                const goodDays = futureData.filter(d => d.predicted <= 50).length;
+                const moderateDays = futureData.filter(d => d.predicted > 50 && d.predicted <= 100).length;
+                
+                return `
+                    <div style="font-size: 1.1em;">${userName ? `Dear ${userName}, ` : ''}🔮 Next 7 Days Forecast</div>
+                    <div class="aqi-card" style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Date</th>
+                                    <th>Predicted AQI</th>
+                                    <th>Category</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="info-box">
+                        <strong>Week Summary:</strong><br>
+                        • Average Forecast: <span class="highlight">${avgForecast}</span> AQI<br>
+                        • Good Days: <span class="success">${goodDays}</span> | Moderate Days: <span class="warning">${moderateDays}</span><br>
+                        • Best Day: <span class="success">${bestDay.day_name}</span> (${bestDay.predicted} AQI)<br>
+                        • Worst Day: <span class="danger">${worstDay.day_name}</span> (${worstDay.predicted} AQI)
+                    </div>
+                    <div class="warning-box">
+                        ⚠️ <strong>Note:</strong> These are forecasts. Actual AQI values may vary.
+                    </div>
+                `;
+            }
+            
+            // SPECIFIC DAY QUERY (check both past and future)
+            const pastMatch = findDateInPast(query);
+            const futureMatch = findDateInFuture(query);
+            
+            if (pastMatch) {
+                const d = pastMatch.data;
+                const cat = getAQICategory(d.predicted);
+                const actualCat = getAQICategory(d.actual);
+                
+                return `
+                    <div style="font-size: 1.1em;">${userName ? `Dear ${userName}, ` : ''}📅 ${d.day_name}, ${d.date} ${d.is_today ? '(Today)' : '(Past)'}</div>
+                    <div class="aqi-card">
+                        <table class="data-table">
+                            <tr>
+                                <td><strong>Predicted AQI</strong></td>
+                                <td><span style="color: ${cat.color}; font-weight: 700; font-size: 1.2em;">${d.predicted}</span> <span class="category-badge badge-${cat.class}">${cat.name}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Actual AQI</strong></td>
+                                <td><span style="color: ${actualCat.color}; font-weight: 700; font-size: 1.2em;">${d.actual}</span> <span class="category-badge badge-${actualCat.class}">${actualCat.name}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Prediction Error</strong></td>
+                                <td><span class="highlight">${d.error}</span> points</td>
+                            </tr>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            if (futureMatch) {
+                const d = futureMatch.data;
+                const cat = getAQICategory(d.predicted);
+                const advice = getHealthAdvice(d.predicted);
+                
+                return `
+                    <div style="font-size: 1.1em;">${userName ? `Dear ${userName}, ` : ''}🔮 ${d.day_name}, ${d.date} (Forecast)</div>
+                    <div class="aqi-card">
+                        <div style="text-align: center;">
+                            <div style="opacity: 0.7;">Predicted AQI</div>
+                            <div class="aqi-value aqi-${cat.class}">${d.predicted}</div>
+                            <div class="category-badge badge-${cat.class}">${cat.emoji} ${cat.name}</div>
+                        </div>
+                    </div>
+                    <div class="tip-box">
+                        <strong>Health Advice:</strong> ${advice.overall}
+                    </div>
+                    <div class="warning-box">
+                        ⚠️ <strong>Note:</strong> This is a forecast. Actual AQI will only be known after this date.
+                    </div>
+                `;
+            }
+            
+            // HEALTH ADVICE
+            if (query.match(/health|exercise|outdoor|mask|safe|recommend/)) {
+                const advice = getHealthAdvice(todayPredicted);
+                const cat = getAQICategory(todayPredicted);
+                
+                return `
+                    <div style="font-size: 1.1em;">${userName ? `Dear ${userName}, ` : ''}💚 Health Recommendations for Today</div>
+                    <div class="aqi-card">
+                        <div style="text-align: center; margin-bottom: 15px;">
+                            <div style="opacity: 0.7;">Current AQI</div>
+                            <div class="aqi-value aqi-${cat.class}">${todayPredicted}</div>
+                            <div class="category-badge badge-${cat.class}">${cat.emoji} ${cat.name}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px;"><strong>Recommendations:</strong></div>
+                    <div class="recommendations-grid">
+                        <div class="rec-card"><span class="rec-icon">🏃</span><span class="rec-text"><strong>Exercise:</strong> ${advice.exercise}</span></div>
+                        <div class="rec-card"><span class="rec-icon">😷</span><span class="rec-text"><strong>Mask:</strong> ${advice.mask}</span></div>
+                        <div class="rec-card"><span class="rec-icon">🪟</span><span class="rec-text"><strong>Ventilation:</strong> ${advice.windows}</span></div>
+                        <div class="rec-card"><span class="rec-icon">👶</span><span class="rec-text"><strong>Children/Elderly:</strong> ${advice.children}</span></div>
+                    </div>
+                `;
+            }
+            
+            // MODEL INFO (UPDATED FOR GRU)
+            if (query.match(/model|accuracy|performance|how good|reliable|gru/)) {
+                return `
+                    <div style="font-size: 1.1em;">${userName ? `Dear ${userName}, ` : ''}🔬 About the Prediction Model</div>
+                    <div class="aqi-card">
+                        <table class="data-table">
+                            <tr><td><strong>Model Type</strong></td><td>${modelInfo.name}</td></tr>
+                            <tr><td><strong>MAE (Mean Absolute Error)</strong></td><td><span class="highlight">${modelInfo.mae}</span> AQI points</td></tr>
+                            <tr><td><strong>RMSE</strong></td><td>${modelInfo.rmse} AQI points</td></tr>
+                            <tr><td><strong>Classification Accuracy</strong></td><td><span class="success">${modelInfo.accuracy}%</span></td></tr>
+                            <tr><td><strong>R² Score</strong></td><td>${modelInfo.r2}</td></tr>
+                            <tr><td><strong>Parameters</strong></td><td>${modelInfo.parameters.toLocaleString()}</td></tr>
+                            <tr><td><strong>Improvement over Baseline</strong></td><td><span class="success">+${modelInfo.baselineImprovement}%</span></td></tr>
+                        </table>
+                    </div>
+                    <div class="info-box">
+                        <strong>Key Insights:</strong><br>
+                        • Top Feature: <span class="highlight">${modelInfo.topFeature}</span><br>
+                        • Most Important Pollutant: <span class="highlight">${modelInfo.topPollutant}</span><br>
+                        • Most Important Lag: <span class="highlight">${modelInfo.topLag}</span>
+                    </div>
+                    <div class="tip-box">
+                        <strong>What does this mean?</strong><br>
+                        On average, the model predicts AQI within ±${modelInfo.mae} points of the actual value. It correctly classifies air quality categories ${modelInfo.accuracy}% of the time.
+                    </div>
+                `;
+            }
+            
+            // FEATURE IMPORTANCE
+            if (query.match(/feature|important|contribute|factor/)) {
+                return `
+                    <div style="font-size: 1.1em;">${userName ? `Dear ${userName}, ` : ''}📊 Feature Importance Analysis</div>
+                    <div class="aqi-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>Rank</th><th>Feature</th><th>Importance</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>1</td><td>O3_Mean_roll_std_7</td><td><span class="highlight">0.0583</span></td></tr>
+                                <tr><td>2</td><td>NO2_AQI</td><td>0.0337</td></tr>
+                                <tr><td>3</td><td>O3_AQI</td><td>0.0315</td></tr>
+                                <tr><td>4</td><td>O3_Mean_lag_7</td><td>0.0251</td></tr>
+                                <tr><td>5</td><td>SO2_Mean_lag_2</td><td>0.0246</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="info-box">
+                        <strong>Pollutant Importance Ranking:</strong><br>
+                        1. 🥇 O3 (Ozone): 37.5%<br>
+                        2. 🥈 CO (Carbon Monoxide): 28.4%<br>
+                        3. 🥉 NO2 (Nitrogen Dioxide): 18.5%<br>
+                        4. SO2 (Sulfur Dioxide): 15.6%
+                    </div>
+                    <div class="tip-box">
+                        <strong>Key Finding:</strong> Ozone (O3) is the most important pollutant for predicting overall air quality!
+                    </div>
+                `;
+            }
+            
+            // WHAT IS AQI
+            if (query.match(/what is aqi|explain aqi|aqi mean|definition/)) {
+                return `
+                    <div style="font-size: 1.1em;">❓ What is AQI?</div>
+                    <p style="margin: 10px 0;">The <strong>Air Quality Index (AQI)</strong> is a standardized indicator for reporting daily air quality. It tells you how clean or polluted the air is and what health effects might be of concern.</p>
+                    <div class="aqi-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>AQI Range</th><th>Category</th><th>Health Concern</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr style="color: #27ae60;"><td>0-50</td><td>😊 Good</td><td>No health impacts</td></tr>
+                                <tr style="color: #f1c40f;"><td>51-100</td><td>😐 Moderate</td><td>Minor concern for sensitive</td></tr>
+                                <tr style="color: #e67e22;"><td>101-150</td><td>😷 Unhealthy (SG)</td><td>Sensitive groups affected</td></tr>
+                                <tr style="color: #e74c3c;"><td>151-200</td><td>🤢 Unhealthy</td><td>Everyone may feel effects</td></tr>
+                                <tr style="color: #8e44ad;"><td>201-300</td><td>😨 Very Unhealthy</td><td>Health warnings</td></tr>
+                                <tr style="color: #7f0000;"><td>300+</td><td>☠️ Hazardous</td><td>Emergency conditions</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            // POLLUTANTS
+            if (query.match(/pollutant|no2|so2|co|o3|ozone|nitrogen|sulfur|carbon/)) {
+                return `
+                    <div style="font-size: 1.1em;">🧪 Pollutants Monitored</div>
+                    <div class="aqi-card">
+                        <table class="data-table">
+                            <tr>
+                                <td><strong>O3 (Ozone)</strong></td>
+                                <td>Most important for prediction (37.5%). Ground-level ozone formed by chemical reactions between NOx and VOCs in sunlight.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>CO (Carbon Monoxide)</strong></td>
+                                <td>Colorless, odorless gas from incomplete combustion. Second most important (28.4%).</td>
+                            </tr>
+                            <tr>
+                                <td><strong>NO2 (Nitrogen Dioxide)</strong></td>
+                                <td>Reddish-brown gas from vehicles and power plants. Third most important (18.5%).</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SO2 (Sulfur Dioxide)</strong></td>
+                                <td>From fossil fuel combustion. Fourth most important (15.6%).</td>
+                            </tr>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            // HELP
+            if (query.match(/help|what can you|how to|commands|options/)) {
+                return `
+                    <div style="font-size: 1.1em;">${userName ? `Hi ${userName}! ` : ''}📋 How Can I Help You?</div>
+                    <div class="info-box">
+                        <strong>🌡️ AQI Predictions:</strong>
+                        <ul style="margin: 5px 0 0 20px;">
+                            <li>"What is today's AQI?"</li>
+                            <li>"Show me yesterday's AQI"</li>
+                            <li>"What about tomorrow?"</li>
+                            <li>"What was Monday's AQI?"</li>
+                        </ul>
+                    </div>
+                    <div class="info-box">
+                        <strong>📅 Week Overview:</strong>
+                        <ul style="margin: 5px 0 0 20px;">
+                            <li>"Show last 7 days"</li>
+                            <li>"Show next 7 days forecast"</li>
+                        </ul>
+                    </div>
+                    <div class="info-box">
+                        <strong>💚 Health Advice:</strong>
+                        <ul style="margin: 5px 0 0 20px;">
+                            <li>"Is it safe to exercise today?"</li>
+                            <li>"Should I wear a mask?"</li>
+                            <li>"Health recommendations"</li>
+                        </ul>
+                    </div>
+                    <div class="info-box">
+                        <strong>🔬 Technical Info:</strong>
+                        <ul style="margin: 5px 0 0 20px;">
+                            <li>"Tell me about the model"</li>
+                            <li>"What features are important?"</li>
+                            <li>"What is AQI?"</li>
+                            <li>"Tell me about pollutants"</li>
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            // THANKS
+            if (query.match(/thank|thanks|thx|appreciate/)) {
+                return `
+                    <div style="font-size: 1.1em;">You're welcome${userName ? `, ${userName}` : ''}! 😊</div>
+                    <div style="margin-top: 10px;">I'm always here to help you with air quality information. Stay safe and breathe easy!</div>
+                    <div class="tip-box" style="margin-top: 10px;">
+                        Is there anything else you'd like to know about air quality?
+                    </div>
+                `;
+            }
+            
+            // BYE
+            if (query.match(/bye|goodbye|see you|exit|quit/)) {
+                return `
+                    <div style="font-size: 1.1em;">Goodbye${userName ? `, ${userName}` : ''}! 👋</div>
+                    <div style="margin-top: 10px;">Take care and stay safe! Remember to check back for air quality updates.</div>
+                    <div class="tip-box" style="margin-top: 10px;">
+                        🌱 Tip: Check the forecast before planning outdoor activities!
+                    </div>
+                `;
+            }
+            
+            // DEFAULT RESPONSE
+            return `
+                <div>I'm not sure I understand that${userName ? `, ${userName}` : ''}. 🤔</div>
+                <div style="margin-top: 10px;">Here are some things you can ask me:</div>
+                <div class="info-box" style="margin-top: 10px;">
+                    • "What is today's AQI?"<br>
+                    • "Show next 7 days forecast"<br>
+                    • "Health recommendations"<br>
+                    • "Tell me about the model"<br>
+                    • Type <strong>"Help"</strong> for all options
+                </div>
+            `;
+        }
+        
+        // Send message function
+        function sendMessage(text) {
+            const input = document.getElementById('userInput');
+            const message = text || input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addMessage(message, true);
+            input.value = '';
+            
+            // Show typing indicator
+            showTyping();
+            
+            // Process and respond after delay
+            setTimeout(() => {
+                hideTyping();
+                const response = processMessage(message);
+                addMessage(response);
+            }, 800 + Math.random() * 500);
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        // Initial greeting
+        window.onload = function() {
+            setTimeout(() => {
+                addMessage(`
+                    <div style="font-size: 1.1em;">👋 Welcome to the AQI Prediction Assistant!</div>
+                    <div style="margin-top: 10px;">I can help you with:</div>
+                    <div class="info-box" style="margin-top: 10px;">
+                        🌡️ Today's air quality prediction<br>
+                        📅 Past 7 days analysis<br>
+                        🔮 Next 7 days forecast<br>
+                        💚 Health recommendations<br>
+                        🔬 Model performance info
+                    </div>
+                    <div class="tip-box" style="margin-top: 10px;">
+                        <strong>Tip:</strong> Use the quick action buttons below or type your question!
+                    </div>
+                `);
+            }, 500);
+        };
+    </script>
+</body>
+</html>
